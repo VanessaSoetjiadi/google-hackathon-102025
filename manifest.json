@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Highlighted Text Translator",
+  "version": "1.0",
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ]
+}
