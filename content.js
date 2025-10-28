@@ -3,10 +3,6 @@ console.log("Hello Content")
 let currentBox = null;
 
 document.addEventListener('mouseup', () => {
-  if (!('ai' in navigator)) {
-    console.error('AI APIs not supported in this browser');
-    // Fallback or error handling
-  };
   popUpText();
 });
 
@@ -33,6 +29,18 @@ function popUpText() {
   currentBox.textContent = selection.toString();
 
   document.body.appendChild(currentBox);
+};
+
+async function translateText() {
+  try {
+    const capabilities = await navigator.ai.available();
+
+    if (!capabilities.translator) {
+      throw new Error('Chrome Translator API not available');
+    }
+  } catch (error) {
+    console.error('Error checking Chrome AI capabilities:', error);
+  };
 };
 
 currentBox = null;
