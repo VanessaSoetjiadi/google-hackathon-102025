@@ -15,3 +15,6 @@
 
 **2. Install extension:**
 - Load unpacked extension from the `dist/` folder
+
+### Additional Notes
+Feature might be slow when first loaded, please be patient :)
