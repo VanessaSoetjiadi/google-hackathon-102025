@@ -1,12 +1,64 @@
 console.log("Hello Content")
 
 let currentBox = null;
+let translatorReady = false;
 
-document.addEventListener('mouseup', () => {
-  popUpText();
+// Checks if Translator API is available
+document.addEventListener('click', async function initializeTranslator(event) {
+  if (translatorReady) return;
+
+  try {
+    const translatorAvailability = await Translator.availability({
+      sourceLanguage: 'es',
+      targetLanguage: 'fr',
+    });
+    console.log("Translator availability:", translatorAvailability);
+    translatorReady = true;
+
+    if (translatorAvailability === 'downloadable') {
+      const translator = await Translator.create({
+        sourceLanguage: 'es',
+        targetLanguage: 'fr',
+        monitor(m) {
+          m.addEventListener('downloadprogress', (e) => {
+            console.log(`Downloaded ${e.loaded * 100}%`);
+          });
+        },
+      });
+
+      return translator;
+    };
+  } catch (error) {
+    console.log("Error initializing translator:", error);
+  };
 });
 
-function popUpText() {
+// Use translator API to translate text
+async function useTranslator(text) {
+  const translator = await Translator.create({
+    sourceLanguage: 'en',
+    targetLanguage: 'fr',
+  });
+
+  console.log(text.length);
+
+  if (text.length > 999) {
+    const stream = await translator.translateStreaming(text);
+    let fullTranslation = '';
+
+    for await (const chunk of stream) {
+      fullTranslation += chunk;
+    };
+
+    return fullTranslation;
+  }
+  
+  const result = await translator.translate(text);
+  return result;
+};
+
+// Creates pop up text below the highlighted text
+async function popUpText() {
   if (currentBox) {
     currentBox.remove();
   };
@@ -26,22 +78,13 @@ function popUpText() {
     border: 1px solid black;
     padding: 5px;
   `;
-  currentBox.textContent = selection.toString();
+
+  const translatedText = await useTranslator(selection.toString());
+  currentBox.textContent = translatedText;
 
   document.body.appendChild(currentBox);
 };
 
-async function translateText() {
-  try {
-    const capabilities = await navigator.ai.available();
-
-    if (!capabilities.translator) {
-      throw new Error('Chrome Translator API not available');
-    }
-  } catch (error) {
-    console.error('Error checking Chrome AI capabilities:', error);
-  };
-};
-
-currentBox = null;
-
+document.addEventListener('mouseup', () => {
+  popUpText();
+});
