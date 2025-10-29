@@ -33,12 +33,26 @@ document.addEventListener('click', async function initializeTranslator(event) {
   };
 });
 
+// Use translator API to translate text
 async function useTranslator(text) {
   const translator = await Translator.create({
     sourceLanguage: 'en',
     targetLanguage: 'fr',
   });
 
+  console.log(text.length);
+
+  if (text.length > 999) {
+    const stream = await translator.translateStreaming(text);
+    let fullTranslation = '';
+
+    for await (const chunk of stream) {
+      fullTranslation += chunk;
+    };
+
+    return fullTranslation;
+  }
+  
   const result = await translator.translate(text);
   return result;
 };
