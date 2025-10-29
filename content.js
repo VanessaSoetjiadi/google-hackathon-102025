@@ -3,35 +3,33 @@ console.log("Hello Content")
 let currentBox = null;
 let translatorReady = false;
 
-// Checks if Translator API is available
-document.addEventListener('click', async function initializeTranslator(event) {
+// Initialize translator once on page load
+(async function initializeTranslator() {
   if (translatorReady) return;
 
   try {
-    const translatorAvailability = await Translator.availability({
-      sourceLanguage: 'es',
+    const availability = await Translator.availability({
+      sourceLanguage: 'en',
       targetLanguage: 'fr',
     });
-    console.log("Translator availability:", translatorAvailability);
-    translatorReady = true;
-
-    if (translatorAvailability === 'downloadable') {
-      const translator = await Translator.create({
-        sourceLanguage: 'es',
+    
+    if (availability === 'downloadable') {
+      await Translator.create({
+        sourceLanguage: 'en',
         targetLanguage: 'fr',
         monitor(m) {
           m.addEventListener('downloadprogress', (e) => {
-            console.log(`Downloaded ${e.loaded * 100}%`);
+            console.log(`Downloaded ${e.loaded}%`);
           });
         },
       });
-
-      return translator;
-    };
+    }
+    
+    translatorReady = true;
   } catch (error) {
     console.log("Error initializing translator:", error);
-  };
-});
+  }
+})();
 
 // Use translator API to translate text
 async function useTranslator(text) {
@@ -87,4 +85,13 @@ async function popUpText() {
 
 document.addEventListener('mouseup', () => {
   popUpText();
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "updateSettings") {
+    const { sourceLanguage, targetLanguage } = message.data;
+    console.log("Received settings from popup:", sourceLanguage, targetLanguage);
+    
+    sendResponse({ success: true });
+  }
 });
