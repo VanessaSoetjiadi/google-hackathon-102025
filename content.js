@@ -34,14 +34,11 @@ let translatorReady = false;
 // Use translator API to translate text
 async function useTranslator(text) {
   const settings = await chrome.storage.sync.get(['sourceLanguage', 'targetLanguage']);
-  console.log('Using settings:', settings);
 
   const translator = await Translator.create({
     sourceLanguage: settings.sourceLanguage || 'en',
     targetLanguage: settings.targetLanguage || 'fr',
   });
-
-  console.log(text.length);
 
   if (text.length > 999) {
     const stream = await translator.translateStreaming(text);
@@ -57,26 +54,6 @@ async function useTranslator(text) {
   const result = await translator.translate(text);
   return result;
 };
-
-// async function useTranslator(text) {
-//   try {
-//     console.log('Translating text:', text);
-//     const settings = await chrome.storage.sync.get(['sourceLanguage', 'targetLanguage']);
-//     console.log('Using settings:', settings);
-
-//     const translator = await Translator.create({
-//       sourceLanguage: settings.sourceLanguage || 'en',
-//       targetLanguage: settings.targetLanguage || 'fr',
-//     });
-
-//     const result = await translator.translate(text);
-//     console.log('Translation result:', result);
-//     return result;
-//   } catch (error) {
-//     console.error('Translation error:', error);
-//     return 'Translation failed: ' + error.message;
-//   }
-// };
 
 // Creates pop up text below the highlighted text
 async function popUpText() {
