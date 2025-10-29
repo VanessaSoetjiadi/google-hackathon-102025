@@ -3,41 +3,42 @@ console.log("Hello Content")
 let currentBox = null;
 let translatorReady = false;
 
-// Checks if Translator API is available
-document.addEventListener('click', async function initializeTranslator(event) {
+// Initialize translator once on page load
+(async function initializeTranslator() {
   if (translatorReady) return;
 
   try {
-    const translatorAvailability = await Translator.availability({
-      sourceLanguage: 'es',
+    const availability = await Translator.availability({
+      sourceLanguage: 'en',
       targetLanguage: 'fr',
     });
-    console.log("Translator availability:", translatorAvailability);
-    translatorReady = true;
-
-    if (translatorAvailability === 'downloadable') {
-      const translator = await Translator.create({
-        sourceLanguage: 'es',
+    
+    if (availability === 'downloadable') {
+      await Translator.create({
+        sourceLanguage: 'en',
         targetLanguage: 'fr',
         monitor(m) {
           m.addEventListener('downloadprogress', (e) => {
-            console.log(`Downloaded ${e.loaded * 100}%`);
+            console.log(`Downloaded ${e.loaded}%`);
           });
         },
       });
-
-      return translator;
-    };
+    }
+    
+    translatorReady = true;
   } catch (error) {
     console.log("Error initializing translator:", error);
-  };
-});
+  }
+})();
 
 // Use translator API to translate text
 async function useTranslator(text) {
+  const settings = await chrome.storage.sync.get(['sourceLanguage', 'targetLanguage']);
+  console.log('Using settings:', settings);
+
   const translator = await Translator.create({
-    sourceLanguage: 'en',
-    targetLanguage: 'fr',
+    sourceLanguage: settings.sourceLanguage || 'en',
+    targetLanguage: settings.targetLanguage || 'fr',
   });
 
   console.log(text.length);
@@ -56,6 +57,26 @@ async function useTranslator(text) {
   const result = await translator.translate(text);
   return result;
 };
+
+// async function useTranslator(text) {
+//   try {
+//     console.log('Translating text:', text);
+//     const settings = await chrome.storage.sync.get(['sourceLanguage', 'targetLanguage']);
+//     console.log('Using settings:', settings);
+
+//     const translator = await Translator.create({
+//       sourceLanguage: settings.sourceLanguage || 'en',
+//       targetLanguage: settings.targetLanguage || 'fr',
+//     });
+
+//     const result = await translator.translate(text);
+//     console.log('Translation result:', result);
+//     return result;
+//   } catch (error) {
+//     console.error('Translation error:', error);
+//     return 'Translation failed: ' + error.message;
+//   }
+// };
 
 // Creates pop up text below the highlighted text
 async function popUpText() {
@@ -87,4 +108,13 @@ async function popUpText() {
 
 document.addEventListener('mouseup', () => {
   popUpText();
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "updateSettings") {
+    const { sourceLanguage, targetLanguage } = message.data;
+    console.log("Received settings from popup:", sourceLanguage, targetLanguage);
+    
+    sendResponse({ success: true });
+  }
 });

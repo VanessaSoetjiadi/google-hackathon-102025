@@ -1,15 +1,29 @@
 {
   "manifest_version": 3,
-  "name": "Highlighted Text Translator",
+  "name": "Selected Text Translator",
   "version": "1.0",
-  "background": {
-    "service_worker": "background.js",
-    "type": "module"
+  "description": "Translates text using Chrome's AI",
+
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "AI Translator Settings"
   },
+
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"]
     }
-  ]
+  ],
+
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  }
 }
