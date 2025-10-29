@@ -1,74 +1,40 @@
 console.log("Hello Content")
 
 let currentBox = null;
-let translatorReady = false;
-let langDetectorReady = false;
 
-// Initialize translator once on page load
-(async function initializeTranslator() {
-  if (translatorReady) return;
+// Listens for any mouseup events
+document.addEventListener('mouseup', () => {
+  popUpText();
+});
 
-  try {
-    const availability = await Translator.availability({
-      sourceLanguage: 'en',
-      targetLanguage: 'fr',
-    });
-    
-    if (availability === 'downloadable') {
-      await Translator.create({
-        sourceLanguage: 'en',
-        targetLanguage: 'fr',
-        monitor(m) {
-          m.addEventListener('downloadprogress', (e) => {
-            console.log(`Downloaded ${e.loaded}%`);
-          });
-        },
-      });
-    }
-    
-    translatorReady = true;
-  } catch (error) {
-    console.log("Error initializing translator:", error);
+// Listen for messages from popup
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "updateSettings") {
+    console.log('Settings updated:', request.data);
+    sendResponse({success: true});
+  }
+});
+
+// Language detector to detect the selected text's language
+async function useLanguageDetector(text) {
+  const availability = await LanguageDetector.availability();
+  
+  if (availability === 'no') {
+    return `Language Detector cannot be initialized`;
   };
-})();
 
-// Initialize language detection once on page load
-(async function initializeLangDetector() {
-  if (langDetectorReady) return;
-
-  try {
-    const availability = await LanguageDetector.availability();
-    
-    if (availability === 'downloadable') {
-      await LanguageDetector.create({
-        monitor(m) {
-          m.addEventListener('downloadprogress', (e) => {
-            console.log(`Downloaded ${e.loaded*100}%`);
-          });
-        },
-      });
-    }
-    
-    langDetectorReady = true;
-  } catch (error) {
-    console.log("Error initializing language detector:", error);
-  };
-})();
-
-// Use language detector to detect language
-async function useLangDetector(text) {
   const detector = await LanguageDetector.create();
 
   const results = await detector.detect(text);
   return results[0].detectedLanguage;
 };
 
-// Use translator API to translate text
+// Using the Translator API to translate selected text
 async function useTranslator(text) {
   const settings = await chrome.storage.sync.get(['sourceLanguage', 'targetLanguage']);
 
   if (settings.sourceLanguage === 'auto') {
-    settings.sourceLanguage = await useLangDetector(text);
+    settings.sourceLanguage = await useLanguageDetector(text);
   };
 
   const sourceLanguage = settings.sourceLanguage || 'en';
@@ -86,12 +52,24 @@ async function useTranslator(text) {
 
     if (availability === 'no') {
       return `Translation not available for ${sourceLanguage} to ${targetLanguage}`;
-    }
+    };
 
     const translator = await Translator.create({
       sourceLanguage,
       targetLanguage,
     });
+    
+    // For longer texts
+    if (text.length > 999) {
+      const stream = await translator.translateStreaming(text);
+      let fullTranslation = '';
+
+      for await (const chunk of stream) {
+        fullTranslation += chunk;
+      };
+
+      return fullTranslation;
+    }
 
     const result = await translator.translate(text);
     return result;
@@ -100,7 +78,7 @@ async function useTranslator(text) {
   }
 };
 
-// Creates pop up text below the highlighted text
+// Creates Pop up text below the highlighted text
 async function popUpText() {
   if (currentBox) {
     currentBox.remove();
@@ -127,15 +105,3 @@ async function popUpText() {
 
   document.body.appendChild(currentBox);
 };
-
-// Listen for messages from popup
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "updateSettings") {
-    console.log('Settings updated:', request.data);
-    sendResponse({success: true});
-  }
-});
-
-document.addEventListener('mouseup', () => {
-  popUpText();
-});
