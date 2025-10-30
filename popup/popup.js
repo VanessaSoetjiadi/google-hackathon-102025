@@ -6,6 +6,7 @@ async function loadSettings() {
   
   document.getElementById('sourceLanguage').value = result.sourceLanguage || 'auto';
   document.getElementById('targetLanguage').value = result.targetLanguage || 'en';
+  document.getElementById('fontSize').value = result.fontSize || 'medium';
 }
 
 async function saveSettings() {

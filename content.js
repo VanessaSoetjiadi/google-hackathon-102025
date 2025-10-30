@@ -97,7 +97,15 @@ async function popUpText() {
   const range = selection.getRangeAt(0);
   const rect = range.getBoundingClientRect();
 
-  const settings = await chrome.storage.sync.get(['fontSize']);
+  let settings = {};
+  
+  try {
+    settings = await chrome.storage.sync.get(['fontSize']);
+  } catch (error) {
+    console.log('Storage unavailable for fontSize, using default:', error);
+    settings = { fontSize: 'medium' };
+  }
+  
   const fontSize = settings.fontSize || 'medium';
 
   let fontSizeValue;
