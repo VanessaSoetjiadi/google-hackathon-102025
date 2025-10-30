@@ -14,7 +14,9 @@
 - Restart Chrome
 
 **2. Install extension:**
-- Load unpacked extension from the `dist/` folder
+- Load the unpacked extension in Chrome
+- Verify extension appears in toolbar
 
 ### Additional Notes
-Feature might be slow when first loaded, please be patient :)
+- Language Detector API might not be accurate, therefore it's recommended that you choose the source language.
+- Translator API supports only the following languages: Korean, Japanese, Chinese, Russian, German, English, French, and Spanish
