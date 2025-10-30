@@ -11,7 +11,8 @@ async function loadSettings() {
 async function saveSettings() {
   const settings = {
     sourceLanguage: document.getElementById('sourceLanguage').value,
-    targetLanguage: document.getElementById('targetLanguage').value
+    targetLanguage: document.getElementById('targetLanguage').value,
+    fontSize: document.getElementById('fontSize').value,
   };
   
   await chrome.storage.sync.set(settings);

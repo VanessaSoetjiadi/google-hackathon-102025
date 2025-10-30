@@ -31,7 +31,14 @@ async function useLanguageDetector(text) {
 
 // Using the Translator API to translate selected text
 async function useTranslator(text) {
-  const settings = await chrome.storage.sync.get(['sourceLanguage', 'targetLanguage']);
+  let settings = {};
+  
+  try {
+    settings = await chrome.storage.sync.get(['sourceLanguage', 'targetLanguage']);
+  } catch (error) {
+    console.log('Storage unavailable, using defaults:', error);
+    settings = { sourceLanguage: 'en', targetLanguage: 'fr' };
+  }
 
   if (settings.sourceLanguage === 'auto') {
     settings.sourceLanguage = await useLanguageDetector(text);
@@ -89,6 +96,16 @@ async function popUpText() {
   
   const range = selection.getRangeAt(0);
   const rect = range.getBoundingClientRect();
+
+  const settings = await chrome.storage.sync.get(['fontSize']);
+  const fontSize = settings.fontSize || 'medium';
+
+  let fontSizeValue;
+  switch (fontSize) {
+    case 'small': fontSizeValue = '14px'; break;
+    case 'large': fontSizeValue = '22px'; break;
+    default: fontSizeValue = '18px'; // medium
+  };
   
   currentBox = document.createElement('div');
   currentBox.style.cssText = `
@@ -98,6 +115,7 @@ async function popUpText() {
     background-color: white;
     border: 1px solid black;
     padding: 5px;
+    font-size: ${fontSizeValue};
   `;
 
   const translatedText = await useTranslator(selection.toString());
